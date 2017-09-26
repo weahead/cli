@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+trap ctrl_c INT
+
+function ctrl_c() {
+    if [ -n "${CID}" ]; then
+        docker kill "${CID}" 1>/dev/null 2>&1
+    fi
+}
+
+ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")")
+
+. "${ROOT_DIR}/../../utils"
+
+PROJECT_DIR=$(wa_project_dir) || exit $?
+
+if ! wa_image_name | grep weahead\\/nodejs 1>/dev/null 2>&1; then
+    echo "Project not based on a 'weahead/nodejs' image."
+    echo "Check 'FROM' statement in '${PROJECT_DIR}/Dockerfile'."
+    echo "Recommended: FROM weahead/nodejs:6.9.5"
+    exit 1
+fi
+
+doInstall () {
+    local NODEJS_VERSION
+    NODEJS_VERSION=$(wa_image_version) || exit $?
+    docker run --rm -d -t \
+        --user node \
+        --entrypoint npm \
+        -v "${PROJECT_DIR}/app":/app \
+        "weahead/nodejs:${NODEJS_VERSION}" \
+        install --save "$@"
+}
+
+if wa_check_docker; then
+    CID=$(doInstall "$@") || exit $?
+    docker logs -f "${CID}"
+fi

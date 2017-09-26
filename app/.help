@@ -1,0 +1,18 @@
+ __    __             _                    _
+/ / /\ \ \___    __ _| |__   ___  __ _  __| |
+\ \/  \/ / _ \  / _` | '_ \ / _ \/ _` |/ _` |
+ \  /\  /  __/ | (_| | | | |  __/ (_| | (_| |
+  \/  \/ \___|  \__,_|_| |_|\___|\__,_|\__,_|
+                      _ _
+                  ___| (_)
+                 / __| | |
+                | (__| | |
+                 \___|_|_|
+
+               Version: 1.0.0
+
+This is We aheads CLI.
+
+It will help out with handling things so you can develop with confidence.
+
+To enable debug mode: "export WA_CLI_DEBUG=1"

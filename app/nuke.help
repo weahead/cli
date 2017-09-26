@@ -1,0 +1,9 @@
+
+USE WITH CAUTION!
+
+This task will permanently remove data volumes.
+
+If you want to keep your projects data volumes use command "down" instead.
+
+Runs all the tasks needed to permanently clean up the project:
+  1. Remove all containers and assocaited volumes used by the project

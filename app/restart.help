@@ -1,0 +1,7 @@
+
+Runs all the tasks needed to restart the project:
+  1. Remove all previous containers used by the project
+  2. Starts up fresh containers used by the project
+
+Options:
+  -d        Detached mode a.k.a. "get back your terminal"

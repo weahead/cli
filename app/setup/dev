@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+
+trap ctrl_c INT
+
+function ctrl_c() {
+    echo -e "${COLOR_NORMAL}"
+    exit 1
+}
+
+ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")")
+
+. "${ROOT_DIR}/../../utils"
+
+echo -e "${COLOR_YELLOW}"
+echo "#################################"
+echo "### PLEASE READ THE FOLLOWING ###"
+echo "#################################"
+echo ""
+echo "This command will try and setup your development environment for We ahead."
+echo "It will primarily install Docker and the software needed to run it properly."
+echo "It will therefore make system changes and will probably prompt you for"
+echo "your administrator password."
+echo ""
+echo "Please provide it if so 🙇"
+echo ""
+echo "Press enter, when you have read the above"
+echo ""
+echo "...or CTRL + C if you wish to abort."
+read -r
+echo -e "${COLOR_GREEN}"
+echo "For your convenience, would you like to preview all commands before they"
+echo "are executed?"
+echo "If so, type \"Yes\", if not leave empty and this command will abort"
+echo "leaving your system untouched."
+echo ""
+
+# https://stackoverflow.com/a/3232082
+read -r -p "(Y)es / (N)o: " response
+case "$response" in
+    [yY][eE][sS]|[yY])
+        echo ""
+        echo "Before a command is run it will be displayed, just press enter to"
+        echo "execute it, or CTRL+C to abort."
+        echo "Press enter when ready, and lets go for real! Promise! 🤞"
+        read -r
+        PREVIEW=1
+        ;;
+    [nN][oO])
+        ;;
+    *)
+        exit 1
+        ;;
+esac
+
+function runit() {
+    if [ -n "${PREVIEW}" ]; then
+        echo -e "${COLOR_BLUE}"
+        echo "$@"
+        echo "☝️ 👍 ❓"
+        echo "(press enter to continue)"
+        read -r
+    fi
+    $@
+    return $?
+}
+
+# xhyve
+function wa_install_xhyve() {
+    runit brew install docker-machine-driver-xhyve || exit $?;
+    runit sudo chown root:wheel "$(brew --prefix)"/opt/docker-machine-driver-xhyve/bin/docker-machine-driver-xhyve || exit $?;
+    runit sudo chmod u+s "$(brew --prefix)"/opt/docker-machine-driver-xhyve/bin/docker-machine-driver-xhyve || exit $?;
+}
+
+# dinghy
+function wa_install_dinghy() {
+    runit brew tap codekitchen/dinghy  || exit $?;
+    runit brew install dinghy || exit $?;
+}
+
+# docker & friends
+function wa_install_docker_and_friends() {
+    runit brew install docker || exit $?;
+    runit brew install docker-machine || exit $?;
+    runit brew install docker-compose || exit $?;
+}
+
+# VM
+function wa_create_dinghy_vm() {
+    runit dinghy create --cpus=1 --memory=2048 --provider=xhyve --disk=51200 || exit $?;
+}
+
+wa_install_xhyve
+wa_install_dinghy
+wa_install_docker_and_friends
+wa_create_dinghy_vm
+
+echo -e "${COLOR_GREEN}"
+echo -e "Setup was a success!"
+echo -e "${COLOR_NORMAL}"

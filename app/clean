@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")")
+
+. "${ROOT_DIR}/../utils"
+
+if wa_check_docker; then
+    if [ $# -eq 0 ]; then
+        ARGS="-c -i -net"
+    else
+        ARGS=$@
+    fi
+    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock zzrot/docker-clean ${ARGS}
+fi

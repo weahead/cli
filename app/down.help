@@ -1,0 +1,3 @@
+
+Runs all the tasks needed to permanently clean up the project containers:
+  1. Remove all containers used by the project

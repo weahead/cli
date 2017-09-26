@@ -1,0 +1,10 @@
+
+Runs all the tasks needed to get up and running:
+  1. Install all NPM dependencies
+  2. Pulls down the latest versions of all images used in the project
+  3. Builds all images that require building
+  4. Remove all previous containers used by the project
+  5. Starts up fresh containers used by the project
+
+Options:
+  -d        Detached mode a.k.a. "get back your terminal"

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")")
+
+. "${ROOT_DIR}/../../utils"
+
+PROJECT_DIR=$(wa_project_dir) || exit $?
+
+if [ -f "${PROJECT_DIR}/docker-compose.util.yml" ]; then
+
+    if wa_check_docker; then
+        docker-compose \
+            -f "${PROJECT_DIR}/docker-compose.util.yml" \
+            run --rm \
+            data-export
+    fi
+
+else
+    echo "Missing file 'docker-compose.util.yml'."
+    exit 1
+fi

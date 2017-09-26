@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+
+if [ -n "${WA_CLI_DEBUG}" ]; then
+    set -x
+fi
+
+COLOR_BLACK="\033[30m"
+COLOR_RED="\033[31m"
+COLOR_GREEN="\033[32m"
+COLOR_YELLOW="\033[33m"
+COLOR_BLUE="\033[34m"
+COLOR_MAGENTA="\033[35m"
+COLOR_CYAN="\033[36m"
+COLOR_LIGHT_GRAY="\033[37m"
+COLOR_DARK_GRAY="\033[38m"
+COLOR_NORMAL="\033[39m"
+
+function bcli_trim_whitespace() {
+    # Function courtesy of http://stackoverflow.com/a/3352015
+    local var="$*"
+    var="${var#"${var%%[![:space:]]*}"}"    # remove leading whitespace characters
+    var="${var%"${var##*[![:space:]]}"}"    # remove trailing whitespace characters
+    echo -n "$var"
+}
+
+function bcli_show_header() {
+    echo -e "$(bcli_trim_whitespace "$(cat "$1/.name")")"
+    echo -e "${COLOR_CYAN}Version    ${COLOR_NORMAL}$(bcli_trim_whitespace "$(cat "$1/.version")")"
+    echo -e "${COLOR_CYAN}Author     ${COLOR_NORMAL}$(bcli_trim_whitespace "$(cat "$1/.author")")"
+}
+
+function wa_project_dir() {
+    local PROJECT_DIR
+    local INIT_DIR
+    PROJECT_DIR=""
+    INIT_DIR=$(pwd)
+    while [ "${PWD}" != "/" ]; do
+        if [ -e Dockerfile ]; then
+            PROJECT_DIR=$(pwd)
+            break
+        else
+            cd ..
+        fi
+    done
+    cd "${INIT_DIR}" || return 1
+
+    if [ -n "${PROJECT_DIR}" ]; then
+        echo "${PROJECT_DIR}"
+        return 0
+    else
+        echo "Please run this command from within a weahead project folder 🤦" >&2
+        return 1
+    fi
+}
+
+function wa_check_docker() {
+    if ! docker ps 1>/dev/null 2>&1; then
+        if hash dinghy 2>/dev/null; then
+            if ! dinghy status | grep "VM: running" 1>/dev/null 2>&1; then
+                if ! dinghy up 1>/dev/null 2>&1; then
+                    if ! docker-machine start dinghy 1>/dev/null 2>&1; then
+                        echo "Failed to start Dinghy 😧" >&2
+                        echo "Try manually starting it and rerunning the command." >&2
+                        return 1
+                    fi
+                    dinghy down 1>/dev/null 2>&1
+                    dinghy up 1>/dev/null 2>&1
+                fi
+            fi
+            eval "$(dinghy env)"
+            return 0
+        else
+            echo "Could not find Dinghy, is it installed properly? 🤔" >&2
+            return 1
+        fi
+        echo "Failed to communicate with Docker daemon 😭" >&2
+        return 1
+    fi
+}
+
+function wa_image_name () {
+    local PROJECT_DIR
+    PROJECT_DIR=$(wa_project_dir) || exit $?
+    head -n 1 "${PROJECT_DIR}/Dockerfile" | sed 's/FROM //' | sed 's/:.*//'
+}
+
+function wa_image_version () {
+    local PROJECT_DIR
+    PROJECT_DIR=$(wa_project_dir) || exit $?
+    head -n 1 "${PROJECT_DIR}/Dockerfile" | sed 's/.*://'
+}

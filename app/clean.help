@@ -1,0 +1,10 @@
+
+Runs all the tasks needed to globally clean up containers, images and networks:
+  1. Removes all stopped containers
+  2. Removes all untagged images
+  3. Removes all empty Networks
+
+Options:
+  -c        Removes all stopped containers
+  -i        Removes all untagged images
+  -net      Removes all empty Networks
