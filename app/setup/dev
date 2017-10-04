@@ -45,7 +45,7 @@ case "$response" in
         read -r
         PREVIEW=1
         ;;
-    [nN][oO])
+    [nN][oO]|[nN])
         ;;
     *)
         exit 1
