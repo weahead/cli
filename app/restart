@@ -5,6 +5,6 @@ ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")"
 . "${ROOT_DIR}/../utils"
 
 if wa_check_docker; then
-    docker-compose down && \
-    docker-compose up "$@"
+    "${ROOT_DIR}/down" &&
+    "${ROOT_DIR}/up" -d
 fi

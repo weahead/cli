@@ -6,6 +6,7 @@ ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")"
 
 if wa_check_docker; then
     while ! docker-compose down; do
+      echo "Please wait..."
       sleep 5
     done
 fi
