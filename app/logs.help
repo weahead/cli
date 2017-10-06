@@ -1,0 +1,6 @@
+
+Displays the logs for all or the given services:
+
+Options:
+  -f        Wait for additional data to be logged.
+
