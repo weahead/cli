@@ -1,0 +1,7 @@
+
+Runs all the tasks needed to refresh the project/container:
+  1. Restarts all containers
+
+Use this command when you just want the project/container to pick up new
+changes that aren't showing up straight away. If it doesn't work, try the
+restart command.
