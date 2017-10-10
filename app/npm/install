@@ -29,7 +29,7 @@ doInstall () {
         --entrypoint npm \
         -v "${PROJECT_DIR}/app":/app \
         "weahead/nodejs:${NODEJS_VERSION}" \
-        install --save "$@"
+        install --save --save-exact "$@"
 }
 
 if wa_check_docker; then
