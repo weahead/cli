@@ -1,0 +1,43 @@
+
+Performs a git rebase of all branches that match a given pattern onto the
+given base branch. This is primarily used to update all release branches of
+repositories that hold Docker base images.
+
+The command will prompt for confirmation and display what it will do before
+doing any rebasing.
+
+Without any paramters this command will assume that the current branch is the
+base branch. It will also assume that it is named like "#.x", where "#" is a
+positive number and "x" is a literal "x". For example: "1.x", "2.x", etc. The
+pattern is assumed to be any branch that begins with the value given by "#".
+For example base branch named "7.x" will only rebase all branches that begin
+with "7." onto it.
+
+With one parameter, that parameter is interpreted as a base branch. Same rules
+apply as above.
+
+With two parameters, the first paramter is interpreted as a base branch. The
+second parameter is interpred as a regular expression pattern used to filter
+all available branches. Only the branches that match the filter will be
+rebased.
+
+Examples:
+  Current branch is "7.x".
+
+  Command: wa devops rebase-tags
+  Description:
+    Rebase all branches based on the current branch.
+    Will rebase all branches that begin with "7." onto the branch named "7.x".
+
+
+  Command: wa devops rebase-tags 1.x "^1."
+  Description:
+    Rebase all branches based on main branch named 1.x:
+    Will rebase all branches that begin with "1." onto the branch named "1.x".
+
+  Command: wa devops rebase-tags 7.x "^7."
+  Description:
+    Rebase all branches based on main branch named 7.x:
+    Will rebase all branches that begin with "7." onto the branch named "7.x".
+    Regardless of the current branch.
+
