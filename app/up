@@ -11,6 +11,6 @@ if wa_check_docker; then
     fi
 
     docker-compose build --pull && \
-    docker-compose down && \
+    "${ROOT_DIR}/down" && \
     docker-compose up "$@"
 fi
