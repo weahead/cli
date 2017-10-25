@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")")
+
+. "${ROOT_DIR}/../utils"
+
+if wa_dinghy_running; then
+    dinghy halt
+else
+  echo "not running"
+fi

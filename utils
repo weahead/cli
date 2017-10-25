@@ -53,10 +53,17 @@ function wa_project_dir() {
     fi
 }
 
+function wa_dinghy_running() {
+    if dinghy status | grep "VM: running" 1>/dev/null 2>&1; then
+      return 0
+    fi
+    return 1
+}
+
 function wa_check_docker() {
     if ! docker ps 1>/dev/null 2>&1; then
         if hash dinghy 2>/dev/null; then
-            if ! dinghy status | grep "VM: running" 1>/dev/null 2>&1; then
+            if ! wa_dinghy_running; then
                 if ! dinghy up 1>/dev/null 2>&1; then
                     if ! docker-machine start dinghy 1>/dev/null 2>&1; then
                         echo "Failed to start Dinghy 😧" >&2
