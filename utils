@@ -85,14 +85,16 @@ function wa_check_docker() {
     fi
 }
 
-function wa_image_name () {
+function wa_image () {
     local PROJECT_DIR
     PROJECT_DIR=$(wa_project_dir) || exit $?
-    head -n 1 "${PROJECT_DIR}/Dockerfile" | sed 's/FROM //' | sed 's/:.*//'
+    head -n 1 "${PROJECT_DIR}/Dockerfile" | sed 's/FROM //'
+}
+
+function wa_image_name () {
+    wa_image | sed 's/:.*//'
 }
 
 function wa_image_version () {
-    local PROJECT_DIR
-    PROJECT_DIR=$(wa_project_dir) || exit $?
-    head -n 1 "${PROJECT_DIR}/Dockerfile" | sed 's/.*://'
+    wa_image | sed 's/.*://'
 }

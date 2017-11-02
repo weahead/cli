@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+trap ctrl_c INT
+
+function ctrl_c() {
+    if [ -n "${CID}" ]; then
+        docker kill "${CID}" 1>/dev/null 2>&1
+    fi
+}
+
+ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")")
+
+. "${ROOT_DIR}/../../utils"
+
+PROJECT_DIR=$(wa_project_dir) || exit $?
+
+doInstall () {
+    local IMAGE_NAME
+    local CONTAINER_APP_PATH
+    local PREFIX
+    local ARGS
+
+    IMAGE_NAME=$(wa_image_name) || exit $?
+    if [ "${IMAGE_NAME}" = "weahead/bedrock" ]; then
+        CONTAINER_APP_PATH="/var/www/html/web/app"
+        PREFIX="wpackagist-plugin/"
+    elif [ "${IMAGE_NAME}" = "weahead/drupal" ]; then
+        CONTAINER_APP_PATH="/var/www/html/web/sites/all"
+        PREFIX="drupal/"
+    fi
+
+    ARGS=("$@")
+
+    docker run --rm  -d -t \
+        --user www-data \
+        --entrypoint sh \
+        -v "${PROJECT_DIR}/app":${CONTAINER_APP_PATH} \
+        $(wa_image) \
+        -c "composer require --prefer-dist \"${ARGS[@]/#/${PREFIX}}\" \
+        && jq '{require: .require | with_entries(select(.key|match(\"wpackagist\")) | .value |= (. | gsub(\"\\\^\";\"\")))}' composer.json > composer-tmp.json \
+        && jq -s '.[0] * .[1]' ${CONTAINER_APP_PATH}/composer.json composer-tmp.json > composer-end.json \
+        && mv composer-end.json ${CONTAINER_APP_PATH}/composer.json \
+        && rm composer-tmp.json"
+}
+
+if wa_check_docker; then
+    CID=$(doInstall "$@") || exit $?
+    docker logs -f "${CID}"
+fi
