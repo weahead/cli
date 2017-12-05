@@ -2,7 +2,7 @@
 
 trap ctrl_c INT
 
-function ctrl_c() {
+ctrl_c () {
   echo -e "${COLOR_NORMAL}"
   exit 1
 }
@@ -52,7 +52,7 @@ case "$response" in
     ;;
 esac
 
-function runit() {
+runit () {
   if [ -n "${PREVIEW}" ]; then
     echo -e "${COLOR_BLUE}"
     echo "$@"
@@ -60,32 +60,32 @@ function runit() {
     echo "(press enter to continue)"
     read -r
   fi
-  $@
+  "$@"
   return $?
 }
 
 # xhyve
-function wa_install_xhyve() {
+wa_install_xhyve () {
   runit brew install docker-machine-driver-xhyve || exit $?;
   runit sudo chown root:wheel "$(brew --prefix)"/opt/docker-machine-driver-xhyve/bin/docker-machine-driver-xhyve || exit $?;
   runit sudo chmod u+s "$(brew --prefix)"/opt/docker-machine-driver-xhyve/bin/docker-machine-driver-xhyve || exit $?;
 }
 
 # dinghy
-function wa_install_dinghy() {
+wa_install_dinghy () {
   runit brew tap codekitchen/dinghy || exit $?;
   runit brew install dinghy || exit $?;
 }
 
 # docker & friends
-function wa_install_docker_and_friends() {
+wa_install_docker_and_friends () {
   runit brew install docker || exit $?;
   runit brew install docker-machine || exit $?;
   runit brew install docker-compose || exit $?;
 }
 
 # VM
-function wa_create_dinghy_vm() {
+wa_create_dinghy_vm () {
   local provider
   provider="${1}"
   runit dinghy create --cpus=1 --memory=2048 --provider="${provider}" --disk=51200 || exit $?;
