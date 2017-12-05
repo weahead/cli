@@ -100,7 +100,13 @@ wa_image_version () {
 wa_ask () {
   # https://gist.github.com/davejamesmiller/1965569
   # https://djm.me/ask
-  local prompt default reply
+  local prompt default reply question
+
+  if [ -z "${1}" ]; then
+    question="Are you sure you want to continue?"
+  else
+    question="${1}"
+  fi
 
   while true; do
 
@@ -116,18 +122,21 @@ wa_ask () {
     fi
 
     # Ask the question (not using "read -p" as it uses stderr not stdout)
-    echo -en "${COLOR_YELLOW}$1 [$prompt] ${COLOR_NORMAL}"
+    echo -en "${COLOR_YELLOW}${question} [${prompt}] ${COLOR_NORMAL}"
 
     # Read the answer (use /dev/tty in case stdin is redirected from somewhere else)
     read -r reply </dev/tty
 
+    # Empty line for spacing in output
+    echo
+
     # Default?
-    if [ -z "$reply" ]; then
-      reply=$default
+    if [ -z "${reply}" ]; then
+      reply=${default}
     fi
 
     # Check if the reply is valid
-    case "$reply" in
+    case "${reply}" in
       Y*|y*) return 0 ;;
       N*|n*) return 1 ;;
     esac
