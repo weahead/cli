@@ -3,8 +3,8 @@
 trap ctrl_c INT
 
 function ctrl_c() {
-    echo -e "${COLOR_NORMAL}"
-    exit 1
+  echo -e "${COLOR_NORMAL}"
+  exit 1
 }
 
 ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")")
@@ -37,62 +37,76 @@ echo ""
 # https://stackoverflow.com/a/3232082
 read -r -p "(Y)es / (N)o: " response
 case "$response" in
-    [yY][eE][sS]|[yY])
-        echo ""
-        echo "Before a command is run it will be displayed, just press enter to"
-        echo "execute it, or CTRL+C to abort."
-        echo "Press enter when ready, and lets go for real! Promise! 🤞"
-        read -r
-        PREVIEW=1
-        ;;
-    [nN][oO]|[nN])
-        ;;
-    *)
-        exit 1
-        ;;
+  [yY][eE][sS]|[yY])
+    echo ""
+    echo "Before a command is run it will be displayed, just press enter to"
+    echo "execute it, or CTRL+C to abort."
+    echo "Press enter when ready, and lets go for real! Promise! 🤞"
+    read -r
+    PREVIEW=1
+    ;;
+  [nN][oO]|[nN])
+    ;;
+  *)
+    exit 1
+    ;;
 esac
 
 function runit() {
-    if [ -n "${PREVIEW}" ]; then
-        echo -e "${COLOR_BLUE}"
-        echo "$@"
-        echo "☝️ 👍 ❓"
-        echo "(press enter to continue)"
-        read -r
-    fi
-    $@
-    return $?
+  if [ -n "${PREVIEW}" ]; then
+    echo -e "${COLOR_BLUE}"
+    echo "$@"
+    echo "☝️ 👍 ❓"
+    echo "(press enter to continue)"
+    read -r
+  fi
+  $@
+  return $?
 }
 
 # xhyve
 function wa_install_xhyve() {
-    runit brew install docker-machine-driver-xhyve || exit $?;
-    runit sudo chown root:wheel "$(brew --prefix)"/opt/docker-machine-driver-xhyve/bin/docker-machine-driver-xhyve || exit $?;
-    runit sudo chmod u+s "$(brew --prefix)"/opt/docker-machine-driver-xhyve/bin/docker-machine-driver-xhyve || exit $?;
+  runit brew install docker-machine-driver-xhyve || exit $?;
+  runit sudo chown root:wheel "$(brew --prefix)"/opt/docker-machine-driver-xhyve/bin/docker-machine-driver-xhyve || exit $?;
+  runit sudo chmod u+s "$(brew --prefix)"/opt/docker-machine-driver-xhyve/bin/docker-machine-driver-xhyve || exit $?;
 }
 
 # dinghy
 function wa_install_dinghy() {
-    runit brew tap codekitchen/dinghy  || exit $?;
-    runit brew install dinghy || exit $?;
+  runit brew tap codekitchen/dinghy || exit $?;
+  runit brew install dinghy || exit $?;
 }
 
 # docker & friends
 function wa_install_docker_and_friends() {
-    runit brew install docker || exit $?;
-    runit brew install docker-machine || exit $?;
-    runit brew install docker-compose || exit $?;
+  runit brew install docker || exit $?;
+  runit brew install docker-machine || exit $?;
+  runit brew install docker-compose || exit $?;
 }
 
 # VM
 function wa_create_dinghy_vm() {
-    runit dinghy create --cpus=1 --memory=2048 --provider=xhyve --disk=51200 || exit $?;
+  local provider
+  provider="${1}"
+  runit dinghy create --cpus=1 --memory=2048 --provider="${provider}" --disk=51200 || exit $?;
 }
 
-wa_install_xhyve
+if ! hash VBoxManage 2>/dev/null; then
+  VIRTUAL_BOX=1
+fi
+
+if [ -z "${VIRTUAL_BOX}" ]; then
+  wa_install_xhyve
+fi
 wa_install_dinghy
 wa_install_docker_and_friends
-wa_create_dinghy_vm
+if ! docker-machine ls --filter "Name=dinghy" -q | grep -i dinghy; then
+  if [ -z "${VIRTUAL_BOX}" ]; then
+    wa_create_dinghy_vm xhyve
+  else
+    wa_create_dinghy_vm virtualbox
+  fi
+fi
 
 echo -e "${COLOR_GREEN}"
 echo -e "Setup was a success!"
