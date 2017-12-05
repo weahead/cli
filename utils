@@ -4,18 +4,18 @@ if [ -n "${WA_CLI_DEBUG}" ]; then
     set -x
 fi
 
-COLOR_BLACK="\033[30m"
-COLOR_RED="\033[31m"
-COLOR_GREEN="\033[32m"
-COLOR_YELLOW="\033[33m"
-COLOR_BLUE="\033[34m"
-COLOR_MAGENTA="\033[35m"
-COLOR_CYAN="\033[36m"
-COLOR_LIGHT_GRAY="\033[37m"
-COLOR_DARK_GRAY="\033[38m"
-COLOR_NORMAL="\033[39m"
+COLOR_BLACK='\033[30m'
+COLOR_RED='\033[31m'
+COLOR_GREEN='\033[32m'
+COLOR_YELLOW='\033[33m'
+COLOR_BLUE='\033[34m'
+COLOR_MAGENTA='\033[35m'
+COLOR_CYAN='\033[36m'
+COLOR_LIGHT_GRAY='\033[37m'
+COLOR_DARK_GRAY='\033[38m'
+COLOR_NORMAL='\033[39m'
 
-function bcli_trim_whitespace() {
+bcli_trim_whitespace() {
     # Function courtesy of http://stackoverflow.com/a/3352015
     local var="$*"
     var="${var#"${var%%[![:space:]]*}"}"    # remove leading whitespace characters
@@ -23,13 +23,13 @@ function bcli_trim_whitespace() {
     echo -n "$var"
 }
 
-function bcli_show_header() {
+bcli_show_header() {
     echo -e "$(bcli_trim_whitespace "$(cat "$1/.name")")"
     echo -e "${COLOR_CYAN}Version    ${COLOR_NORMAL}$(bcli_trim_whitespace "$(cat "$1/.version")")"
     echo -e "${COLOR_CYAN}Author     ${COLOR_NORMAL}$(bcli_trim_whitespace "$(cat "$1/.author")")"
 }
 
-function wa_project_dir() {
+wa_project_dir() {
     local PROJECT_DIR
     local INIT_DIR
     PROJECT_DIR=""
@@ -53,14 +53,14 @@ function wa_project_dir() {
     fi
 }
 
-function wa_dinghy_running() {
+wa_dinghy_running() {
     if dinghy status | grep "VM: running" 1>/dev/null 2>&1; then
       return 0
     fi
     return 1
 }
 
-function wa_check_docker() {
+wa_check_docker() {
     if ! docker ps 1>/dev/null 2>&1; then
         if hash dinghy 2>/dev/null; then
             if ! wa_dinghy_running; then
@@ -85,14 +85,85 @@ function wa_check_docker() {
     fi
 }
 
-function wa_image_name () {
+wa_image_name () {
     local PROJECT_DIR
     PROJECT_DIR=$(wa_project_dir) || exit $?
     head -n 1 "${PROJECT_DIR}/Dockerfile" | sed 's/FROM //' | sed 's/:.*//'
 }
 
-function wa_image_version () {
+wa_image_version () {
     local PROJECT_DIR
     PROJECT_DIR=$(wa_project_dir) || exit $?
     head -n 1 "${PROJECT_DIR}/Dockerfile" | sed 's/.*://'
+}
+
+wa_ask () {
+  # https://gist.github.com/davejamesmiller/1965569
+  # https://djm.me/ask
+  local prompt default reply
+
+  while true; do
+
+    if [ "${2:-}" = "Y" ]; then
+      prompt="Y/n"
+      default=Y
+    elif [ "${2:-}" = "N" ]; then
+      prompt="y/N"
+      default=N
+    else
+      prompt="y/n"
+      default=
+    fi
+
+    # Ask the question (not using "read -p" as it uses stderr not stdout)
+    echo -en "${COLOR_YELLOW}$1 [$prompt] ${COLOR_NORMAL}"
+
+    # Read the answer (use /dev/tty in case stdin is redirected from somewhere else)
+    read -r reply </dev/tty
+
+    # Default?
+    if [ -z "$reply" ]; then
+      reply=$default
+    fi
+
+    # Check if the reply is valid
+    case "$reply" in
+      Y*|y*) return 0 ;;
+      N*|n*) return 1 ;;
+    esac
+
+  done
+}
+
+abort () {
+  echo -e "${COLOR_RED}"
+  if [ -n "${1}" ]; then
+    echo "${1}"
+    echo
+  fi
+  echo "Aborting."
+  echo -e "${COLOR_NORMAL}"
+  exit 1
+}
+
+warn () {
+  echo -e "${COLOR_YELLOW}"
+  echo "${1}"
+  echo -e "${COLOR_NORMAL}"
+}
+
+info () {
+  echo -e "${COLOR_BLUE}"
+  echo "${1}"
+  echo -e "${COLOR_NORMAL}"
+}
+
+success () {
+  echo -e "${COLOR_BLUE}"
+  if [ -n "${1}" ]; then
+    echo "${1}"
+  else
+    echo "Finished successfully"
+  fi
+  echo -e "${COLOR_NORMAL}"
 }
