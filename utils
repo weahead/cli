@@ -144,6 +144,16 @@ wa_ask () {
   done
 }
 
+wa_ask_yes () {
+  wa_ask "${1}" Y
+  return $?
+}
+
+wa_ask_no () {
+  wa_ask "${1}" N
+  return $?
+}
+
 abort () {
   echo -e "${COLOR_RED}"
   if [ -n "${1}" ]; then
