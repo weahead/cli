@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+
+ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")")
+
+. "${ROOT_DIR}/../../utils"
+
+COMMAND="${1}"
+NO_PULL=""
+NO_PUSH=""
+shift
+
+# https://stackoverflow.com/a/14203146
+POSITIONAL=()
+while [ $# -gt 0 ]
+do
+key="$1"
+
+case $key in
+    -y|--yes)
+    YES=1
+    shift # past argument
+    ;;
+    --no-pull)
+    if [ "${COMMAND}" = "import" ]; then
+      NO_PULL=1
+    fi
+    shift # past argument
+    ;;
+    --no-push)
+    if [ "${COMMAND}" = "export" ]; then
+      NO_PUSH=1
+    fi
+    shift # past argument
+    ;;
+    *)    # unknown option
+    POSITIONAL+=("$1") # save it in an array for later
+    shift # past argument
+    ;;
+esac
+done
+set -- "${POSITIONAL[@]}" # restore positional parameters
+
+PROJECT_DIR=$(wa_project_dir) || exit $?
+
+if [ ! -f "${PROJECT_DIR}/docker-compose.util.yml" ]; then
+  abort "Missing file 'docker-compose.util.yml'."
+fi
+
+if ! wa_check_docker; then
+  abort
+fi
+
+DB_CONTAINER=$(docker-compose config --services | grep -e database -e db)
+DB_CONTAINER_COUNT=$(echo "${DB_CONTAINER}" | wc -l)
+if [ "${DB_CONTAINER_COUNT}" = "0" ]; then
+  abort "Unable to find database container."
+elif [ "${DB_CONTAINER_COUNT}" -gt 1 ]; then
+  abort "More than one database container found:
+
+${DB_CONTAINER}
+
+Only one database container is supported."
+fi
+
+if docker-compose exec "${DB_CONTAINER}" true > /dev/null 2>&1; then
+  DB_CONTAINER_RUNNING=1
+fi
+
+if [ "${DB_CONTAINER_RUNNING}" = "1" ]; then
+  warn "To ${COMMAND} the database files properly the database service will have to be shutdown during the ${COMMAND} process.
+It will be started back up when the ${COMMAND} process is finished."
+
+  if [ "${YES}" = "1" ]; then
+    info "Option '-y' given, proceeding without prompt."
+  fi
+
+  if [ "${YES}" = "1" ] || wa_ask_yes; then
+    docker-compose stop "${DB_CONTAINER}"
+  fi
+fi
+
+docker-compose -f "${PROJECT_DIR}/docker-compose.util.yml" pull "data-${COMMAND}"
+docker-compose -f "${PROJECT_DIR}/docker-compose.util.yml" run --rm -e NO_PULL="${NO_PULL}" -e NO_PUSH="${NO_PUSH}" "data-${COMMAND}"
+if [ "${DB_CONTAINER_RUNNING}" = "1" ]; then
+  docker-compose start "${DB_CONTAINER}"
+fi

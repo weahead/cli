@@ -1,2 +1,6 @@
 
 Runs all the tasks needed to export data.
+
+Options:
+  -y, --yes     Answers 'yes' to every prompt.
+  --no-push     Does not push image after export has been created.

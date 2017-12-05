@@ -1,2 +1,6 @@
 
 Runs all the tasks needed to import data.
+
+Options:
+  -y, --yes     Answers 'yes' to every prompt.
+  --no-pull     Does not pull image before import is executed.
