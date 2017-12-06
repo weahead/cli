@@ -85,6 +85,18 @@ wa_check_docker() {
     fi
 }
 
+wa_check_docker_login_to_gitlab () {
+  if ! grep -iq registry.gitlab.com ~/.docker/config.json; then
+    warn "You are not authenticated to our registry over at GitLab.
+If you already have a \"Personal Access Token\" for GitLab please provide it at the next password prompt.
+If you do not have a \"Personal Access Token\" please go to https://gitlab.com/profile/personal_access_tokens and create one.
+It is recommeded that you save it in your LastPass vault for future reference."
+    info "Logging in to registry.gitlab.com
+Please provide your username for gitlab.com and your \"Personal Access Token\" as the password."
+    docker login registry.gitlab.com
+  fi
+}
+
 wa_image_name () {
     local PROJECT_DIR
     PROJECT_DIR=$(wa_project_dir) || exit $?
