@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
+set -e
+
 ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")")
 
 . "${ROOT_DIR}/../../utils"
 
-PROJECT_DIR=$(wa_project_dir) || exit $?
+PROJECT_DIR=$(wa_project_dir)
 
 if ! wa_image_name | grep "weahead\\/nodejs" 1>/dev/null 2>&1; then
     echo "Project not based on a 'weahead/nodejs' image."
@@ -13,9 +15,13 @@ if ! wa_image_name | grep "weahead\\/nodejs" 1>/dev/null 2>&1; then
     exit 1
 fi
 
+if [ ! -d "${PROJECT_DIR}/app" ]; then
+  abort "Missing 'app' folder in ${PROJECT_DIR}"
+fi
+
 doInit () {
     local NODEJS_VERSION
-    NODEJS_VERSION=$(wa_image_version) || exit $?
+    NODEJS_VERSION=$(wa_image_version)
     docker run --rm -it \
         --user node \
         --entrypoint npm \

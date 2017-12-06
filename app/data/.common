@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")")
 
 . "${ROOT_DIR}/../../utils"
@@ -40,7 +42,7 @@ esac
 done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
-PROJECT_DIR=$(wa_project_dir) || exit $?
+PROJECT_DIR=$(wa_project_dir)
 
 if [ ! -f "${PROJECT_DIR}/docker-compose.util.yml" ]; then
   abort "Missing file 'docker-compose.util.yml'."
