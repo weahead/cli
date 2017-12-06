@@ -54,32 +54,33 @@ wa_project_dir() {
 }
 
 wa_dinghy_running() {
-  if dinghy status | grep "VM: running" 1>/dev/null 2>&1; then
-    return 0
+  if dinghy status | grep -iq "stopped"; then
+    return 1
   fi
-  return 1
+  return 0
 }
 
 wa_check_docker() {
-  if ! docker ps 1>/dev/null 2>&1; then
-    if hash dinghy 2>/dev/null; then
-      if ! wa_dinghy_running; then
-        if ! dinghy up 1>/dev/null 2>&1; then
-          if ! docker-machine start dinghy 1>/dev/null 2>&1; then
-            echo "Failed to start Dinghy 😧" >&2
-            echo "Try manually starting it and rerunning the command." >&2
-            return 1
-          fi
-          dinghy down 1>/dev/null 2>&1
-          dinghy up 1>/dev/null 2>&1
+  if hash dinghy 2>/dev/null; then
+    if ! wa_dinghy_running; then
+      dinghy down
+      if ! dinghy up 1>/dev/null 2>&1; then
+        if ! docker-machine start dinghy 1>/dev/null 2>&1; then
+          echo "Failed to start Dinghy 😧" >&2
+          echo "Try manually starting it and rerunning the command." >&2
+          return 1
         fi
+        dinghy down 1>/dev/null 2>&1
+        dinghy up 1>/dev/null 2>&1
       fi
-      eval "$(dinghy env)"
-    else
-      echo "Could not find Dinghy, is it installed properly? 🤔" >&2
+    fi
+    eval "$(dinghy env)"
+    if ! docker ps 1>/dev/null 2>&1; then
+      echo "Failed to communicate with Docker daemon 😭" >&2
       return 1
     fi
-    echo "Failed to communicate with Docker daemon 😭" >&2
+  else
+    echo "Could not find Dinghy, is it installed properly? 🤔" >&2
     return 1
   fi
 
