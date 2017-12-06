@@ -4,6 +4,6 @@ ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")"
 
 . "${ROOT_DIR}/../utils"
 
-if wa_check_docker && wa_check_docker_login_to_gitlab; then
+if wa_check_docker; then
   success "All systems are go! 👊"
 fi

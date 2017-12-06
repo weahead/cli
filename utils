@@ -75,7 +75,6 @@ wa_check_docker() {
                 fi
             fi
             eval "$(dinghy env)"
-            return 0
         else
             echo "Could not find Dinghy, is it installed properly? 🤔" >&2
             return 1
@@ -83,6 +82,12 @@ wa_check_docker() {
         echo "Failed to communicate with Docker daemon 😭" >&2
         return 1
     fi
+
+    if wa_check_docker_login_to_gitlab; then
+      return 0
+    fi
+
+    return 1
 }
 
 wa_check_docker_login_to_gitlab () {
