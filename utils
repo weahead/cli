@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [ -n "${WA_CLI_DEBUG}" ]; then
-    set -x
+  set -x
 fi
 
 COLOR_BLACK='\033[30m'
@@ -16,78 +16,78 @@ COLOR_DARK_GRAY='\033[38m'
 COLOR_NORMAL='\033[39m'
 
 bcli_trim_whitespace() {
-    # Function courtesy of http://stackoverflow.com/a/3352015
-    local var="$*"
-    var="${var#"${var%%[![:space:]]*}"}"    # remove leading whitespace characters
-    var="${var%"${var##*[![:space:]]}"}"    # remove trailing whitespace characters
-    echo -n "$var"
+  # Function courtesy of http://stackoverflow.com/a/3352015
+  local var="$*"
+  var="${var#"${var%%[![:space:]]*}"}"    # remove leading whitespace characters
+  var="${var%"${var##*[![:space:]]}"}"    # remove trailing whitespace characters
+  echo -n "$var"
 }
 
 bcli_show_header() {
-    echo -e "$(bcli_trim_whitespace "$(cat "$1/.name")")"
-    echo -e "${COLOR_CYAN}Version    ${COLOR_NORMAL}$(bcli_trim_whitespace "$(cat "$1/.version")")"
-    echo -e "${COLOR_CYAN}Author     ${COLOR_NORMAL}$(bcli_trim_whitespace "$(cat "$1/.author")")"
+  echo -e "$(bcli_trim_whitespace "$(cat "$1/.name")")"
+  echo -e "${COLOR_CYAN}Version    ${COLOR_NORMAL}$(bcli_trim_whitespace "$(cat "$1/.version")")"
+  echo -e "${COLOR_CYAN}Author     ${COLOR_NORMAL}$(bcli_trim_whitespace "$(cat "$1/.author")")"
 }
 
 wa_project_dir() {
-    local PROJECT_DIR
-    local INIT_DIR
-    PROJECT_DIR=""
-    INIT_DIR=$(pwd)
-    while [ "${PWD}" != "/" ]; do
-        if [ -e Dockerfile ]; then
-            PROJECT_DIR=$(pwd)
-            break
-        else
-            cd ..
-        fi
-    done
-    cd "${INIT_DIR}" || return 1
-
-    if [ -n "${PROJECT_DIR}" ]; then
-        echo "${PROJECT_DIR}"
-        return 0
+  local PROJECT_DIR
+  local INIT_DIR
+  PROJECT_DIR=""
+  INIT_DIR=$(pwd)
+  while [ "${PWD}" != "/" ]; do
+    if [ -e Dockerfile ]; then
+      PROJECT_DIR=$(pwd)
+      break
     else
-        echo "Please run this command from within a weahead project folder 🤦" >&2
-        return 1
+      cd ..
     fi
+  done
+  cd "${INIT_DIR}" || return 1
+
+  if [ -n "${PROJECT_DIR}" ]; then
+    echo "${PROJECT_DIR}"
+    return 0
+  else
+    echo "Please run this command from within a weahead project folder 🤦" >&2
+    return 1
+  fi
 }
 
 wa_dinghy_running() {
-    if dinghy status | grep "VM: running" 1>/dev/null 2>&1; then
-      return 0
-    fi
-    return 1
+  if dinghy status | grep "VM: running" 1>/dev/null 2>&1; then
+    return 0
+  fi
+  return 1
 }
 
 wa_check_docker() {
-    if ! docker ps 1>/dev/null 2>&1; then
-        if hash dinghy 2>/dev/null; then
-            if ! wa_dinghy_running; then
-                if ! dinghy up 1>/dev/null 2>&1; then
-                    if ! docker-machine start dinghy 1>/dev/null 2>&1; then
-                        echo "Failed to start Dinghy 😧" >&2
-                        echo "Try manually starting it and rerunning the command." >&2
-                        return 1
-                    fi
-                    dinghy down 1>/dev/null 2>&1
-                    dinghy up 1>/dev/null 2>&1
-                fi
-            fi
-            eval "$(dinghy env)"
-        else
-            echo "Could not find Dinghy, is it installed properly? 🤔" >&2
+  if ! docker ps 1>/dev/null 2>&1; then
+    if hash dinghy 2>/dev/null; then
+      if ! wa_dinghy_running; then
+        if ! dinghy up 1>/dev/null 2>&1; then
+          if ! docker-machine start dinghy 1>/dev/null 2>&1; then
+            echo "Failed to start Dinghy 😧" >&2
+            echo "Try manually starting it and rerunning the command." >&2
             return 1
+          fi
+          dinghy down 1>/dev/null 2>&1
+          dinghy up 1>/dev/null 2>&1
         fi
-        echo "Failed to communicate with Docker daemon 😭" >&2
-        return 1
+      fi
+      eval "$(dinghy env)"
+    else
+      echo "Could not find Dinghy, is it installed properly? 🤔" >&2
+      return 1
     fi
-
-    if wa_check_docker_login_to_gitlab; then
-      return 0
-    fi
-
+    echo "Failed to communicate with Docker daemon 😭" >&2
     return 1
+  fi
+
+  if wa_check_docker_login_to_gitlab; then
+    return 0
+  fi
+
+  return 1
 }
 
 wa_check_docker_login_to_gitlab () {
@@ -103,15 +103,15 @@ Please provide your username for gitlab.com and your \"Personal Access Token\" a
 }
 
 wa_image_name () {
-    local PROJECT_DIR
-    PROJECT_DIR=$(wa_project_dir) || exit $?
-    head -n 1 "${PROJECT_DIR}/Dockerfile" | sed 's/FROM //' | sed 's/:.*//'
+  local PROJECT_DIR
+  PROJECT_DIR=$(wa_project_dir) || exit $?
+  head -n 1 "${PROJECT_DIR}/Dockerfile" | sed 's/FROM //' | sed 's/:.*//'
 }
 
 wa_image_version () {
-    local PROJECT_DIR
-    PROJECT_DIR=$(wa_project_dir) || exit $?
-    head -n 1 "${PROJECT_DIR}/Dockerfile" | sed 's/.*://'
+  local PROJECT_DIR
+  PROJECT_DIR=$(wa_project_dir) || exit $?
+  head -n 1 "${PROJECT_DIR}/Dockerfile" | sed 's/.*://'
 }
 
 wa_ask () {
