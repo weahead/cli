@@ -178,7 +178,7 @@ info () {
 }
 
 success () {
-  echo -e "${COLOR_BLUE}"
+  echo -e "${COLOR_GREEN}"
   if [ -n "${1}" ]; then
     echo "${1}"
   else
