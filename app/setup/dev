@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 trap ctrl_c INT
 
 ctrl_c () {
@@ -11,96 +13,105 @@ ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")"
 
 . "${ROOT_DIR}/../../utils"
 
-echo -e "${COLOR_YELLOW}"
-echo "#################################"
-echo "### PLEASE READ THE FOLLOWING ###"
-echo "#################################"
-echo ""
-echo "This command will try and setup your development environment for We ahead."
-echo "It will primarily install Docker and the software needed to run it properly."
-echo "It will therefore make system changes and will probably prompt you for"
-echo "your administrator password."
-echo ""
-echo "Please provide it if so 🙇"
-echo ""
-echo "Press enter, when you have read the above"
-echo ""
-echo "...or CTRL + C if you wish to abort."
-read -r
-echo -e "${COLOR_GREEN}"
-echo "For your convenience, would you like to preview all commands before they"
-echo "are executed?"
-echo "If so, type \"Yes\", if not leave empty and this command will abort"
-echo "leaving your system untouched."
-echo ""
-
-# https://stackoverflow.com/a/3232082
-read -r -p "(Y)es / (N)o: " response
-case "$response" in
-  [yY][eE][sS]|[yY])
-    echo ""
-    echo "Before a command is run it will be displayed, just press enter to"
-    echo "execute it, or CTRL+C to abort."
-    echo "Press enter when ready, and lets go for real! Promise! 🤞"
-    read -r
-    PREVIEW=1
-    ;;
-  [nN][oO]|[nN])
-    ;;
-  *)
-    exit 1
-    ;;
-esac
+confirmit () {
+  if [ -n "${PREVIEW}" ]; then
+    info "Command: $*"
+    wa_ask_yes
+  fi
+}
 
 runit () {
-  if [ -n "${PREVIEW}" ]; then
-    echo -e "${COLOR_BLUE}"
-    echo "$@"
-    echo "☝️ 👍 ❓"
-    echo "(press enter to continue)"
-    read -r
-  fi
-  "$@"
+  confirmit "$@"
+  $@
   return $?
+}
+
+wa_brew_install_or_upgrade () {
+  local PACKAGE
+  PACKAGE="${1}"
+
+  if brew ls | grep -iq "${PACKAGE}"; then
+    confirmit brew upgrade "${PACKAGE}"
+    set +e
+    UPGRADE_OUTPUT=$(brew upgrade "${PACKAGE}" 2>&1 > /dev/null)
+    UPGRADE_EXIT_CODE=$?
+    set -e
+    if [ "${UPGRADE_EXIT_CODE}" -ne "0" ] && ! echo "${UPGRADE_OUTPUT}" | grep -iq "already installed"; then
+      exit ${UPGRADE_EXIT_CODE}
+    fi
+  else
+    runit brew install "${PACKAGE}"
+  fi
 }
 
 # xhyve
 wa_install_xhyve () {
-  runit brew install docker-machine-driver-xhyve || exit $?;
-  runit sudo chown root:wheel "$(brew --prefix)"/opt/docker-machine-driver-xhyve/bin/docker-machine-driver-xhyve || exit $?;
-  runit sudo chmod u+s "$(brew --prefix)"/opt/docker-machine-driver-xhyve/bin/docker-machine-driver-xhyve || exit $?;
+  wa_brew_install_or_upgrade docker-machine-driver-xhyve
+  runit sudo chown root:wheel "$(brew --prefix)"/opt/docker-machine-driver-xhyve/bin/docker-machine-driver-xhyve
+  runit sudo chmod u+s "$(brew --prefix)"/opt/docker-machine-driver-xhyve/bin/docker-machine-driver-xhyve
 }
 
 # dinghy
 wa_install_dinghy () {
-  runit brew tap codekitchen/dinghy || exit $?;
-  runit brew install dinghy || exit $?;
+  runit brew tap codekitchen/dinghy
+  wa_brew_install_or_upgrade dinghy
 }
 
 # docker & friends
 wa_install_docker_and_friends () {
-  runit brew install docker || exit $?;
-  runit brew install docker-machine || exit $?;
-  runit brew install docker-compose || exit $?;
+  wa_brew_install_or_upgrade docker
+  wa_brew_install_or_upgrade docker-machine
+  wa_brew_install_or_upgrade docker-compose
 }
 
 # VM
 wa_create_dinghy_vm () {
   local provider
   provider="${1}"
-  runit dinghy create --cpus=1 --memory=2048 --provider="${provider}" --disk=51200 || exit $?;
+  runit dinghy create --cpus=1 --memory=2048 --provider="${provider}" --disk=51200
 }
 
-if ! hash VBoxManage 2>/dev/null; then
+
+warn "#################################
+### PLEASE READ THE FOLLOWING ###
+#################################
+
+This command will try and setup your development environment for We ahead.
+It will primarily install Docker and the software needed to run it properly.
+It will therefore make system changes and will probably prompt you for
+your administrator password.
+
+Please provide it if so 🙇
+
+Press enter, when you have read the above
+
+...or CTRL+C if you wish to abort."
+read -r
+
+if wa_ask_no "For your convenience, would you like to preview all commands before they are executed?
+If so, type \"Y\", if not leave empty or type \"N\" and all commands will be executed without user confirmation."; then
+  echo "Before a command is run it will be displayed, just press enter to execute it, or CTRL+C to abort."
+  echo "Press enter when ready, and lets go for real! Promise! 🤞"
+  read -r
+  PREVIEW=1
+else
+  info "Executing all commands...please wait and enter your administrator password if asked to do so."
+fi
+
+brew update > /dev/null 2>&1
+
+if hash VBoxManage 2>/dev/null; then
   VIRTUAL_BOX=1
 fi
+
+wa_install_docker_and_friends
 
 if [ -z "${VIRTUAL_BOX}" ]; then
   wa_install_xhyve
 fi
 wa_install_dinghy
-wa_install_docker_and_friends
-if ! docker-machine ls --filter "Name=dinghy" -q | grep -i dinghy; then
+
+if ! docker-machine ls --filter "Name=dinghy" -q | grep -iq dinghy; then
   if [ -z "${VIRTUAL_BOX}" ]; then
     wa_create_dinghy_vm xhyve
   else
@@ -108,6 +119,8 @@ if ! docker-machine ls --filter "Name=dinghy" -q | grep -i dinghy; then
   fi
 fi
 
-echo -e "${COLOR_GREEN}"
-echo -e "Setup was a success!"
-echo -e "${COLOR_NORMAL}"
+success "Setup was a success!"
+
+info "Testing setup..."
+
+"${ROOT_DIR}/../status"
