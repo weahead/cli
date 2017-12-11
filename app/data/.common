@@ -2,6 +2,13 @@
 
 set -e
 
+cleanup () {
+  if [ "${DB_CONTAINER_STOPPED}" = "1" ]; then
+    docker-compose start "${DB_CONTAINER}"
+  fi
+}
+trap cleanup EXIT
+
 ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")")
 
 . "${ROOT_DIR}/../../utils"
@@ -52,7 +59,9 @@ if ! wa_check_docker; then
   abort
 fi
 
+set +e
 DB_CONTAINER=$(docker-compose config --services | grep -e database -e db)
+set -e
 DB_CONTAINER_COUNT=$(echo "${DB_CONTAINER}" | wc -l)
 if [ "${DB_CONTAINER_COUNT}" = "0" ]; then
   abort "Unable to find database container."
@@ -78,11 +87,13 @@ It will be started back up when the ${COMMAND} process is finished."
 
   if [ "${YES}" = "1" ] || wa_ask_yes; then
     docker-compose stop "${DB_CONTAINER}"
+    DB_CONTAINER_STOPPED=1
+  else
+    abort
   fi
 fi
 
+
 docker-compose -f "${PROJECT_DIR}/docker-compose.util.yml" pull "data-${COMMAND}"
 docker-compose -f "${PROJECT_DIR}/docker-compose.util.yml" run --rm -e NO_PULL="${NO_PULL}" -e NO_PUSH="${NO_PUSH}" "data-${COMMAND}"
-if [ "${DB_CONTAINER_RUNNING}" = "1" ]; then
-  docker-compose start "${DB_CONTAINER}"
-fi
+

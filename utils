@@ -173,14 +173,18 @@ wa_ask_no () {
 }
 
 abort () {
-  echo -e "${COLOR_RED}"
   if [ -n "${1}" ]; then
-    echo "${1}"
-    echo
+    err "${1}"
+  else
+    err "Aborting."
   fi
-  echo "Aborting."
-  echo -e "${COLOR_NORMAL}"
   exit 1
+}
+
+err () {
+  echo -e "${COLOR_RED}"
+  echo "${1}"
+  echo -e "${COLOR_NORMAL}"
 }
 
 warn () {
