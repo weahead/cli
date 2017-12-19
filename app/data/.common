@@ -52,21 +52,23 @@ if ! wa_check_docker; then
   abort
 fi
 
-warn "#######################
-##### PLEASE READ #####
-#######################
+if [ "${COMMAND}" = "import" ]; then
+  warn "#######################
+  ##### PLEASE READ #####
+  #######################
 
-To ${COMMAND} the data properly all containers/services and volumes will have to be stopped and removed.
-This *WILL REPLACE* all your data with the data from the import."
+  To ${COMMAND} the data properly all containers/services and volumes will have to be stopped and removed.
+  This *WILL REPLACE* all your data with the data from the import."
 
-if [ "${YES}" = "1" ]; then
-  info "Option '-y' given, proceeding without prompt."
-fi
+  if [ "${YES}" = "1" ]; then
+    info "Option '-y' given, proceeding without prompt."
+  fi
 
-if [ "${YES}" = "1" ] || wa_ask_yes; then
-  "${ROOT_DIR}/../nuke"
-else
-  abort
+  if [ "${YES}" = "1" ] || wa_ask_yes; then
+    "${ROOT_DIR}/../nuke"
+  else
+    abort
+  fi
 fi
 
 docker-compose -f "${PROJECT_DIR}/docker-compose.util.yml" pull "data-${COMMAND}"
