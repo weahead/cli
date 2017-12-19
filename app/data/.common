@@ -2,13 +2,6 @@
 
 set -e
 
-cleanup () {
-  if [ "${DB_CONTAINER_STOPPED}" = "1" ]; then
-    docker-compose start "${DB_CONTAINER}"
-  fi
-}
-trap cleanup EXIT
-
 ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")")
 
 . "${ROOT_DIR}/../../utils"
@@ -59,41 +52,22 @@ if ! wa_check_docker; then
   abort
 fi
 
-set +e
-DB_CONTAINER=$(docker-compose config --services | grep -e database -e db)
-set -e
-DB_CONTAINER_COUNT=$(echo "${DB_CONTAINER}" | wc -l)
-if [ "${DB_CONTAINER_COUNT}" = "0" ]; then
-  abort "Unable to find database container."
-elif [ "${DB_CONTAINER_COUNT}" -gt 1 ]; then
-  abort "More than one database container found:
+warn "#######################
+##### PLEASE READ #####
+#######################
 
-${DB_CONTAINER}
+To ${COMMAND} the data properly all containers/services and volumes will have to be stopped and removed.
+This *WILL REPLACE* all your data with the data from the import."
 
-Only one database container is supported."
+if [ "${YES}" = "1" ]; then
+  info "Option '-y' given, proceeding without prompt."
 fi
 
-if docker-compose exec "${DB_CONTAINER}" true > /dev/null 2>&1; then
-  DB_CONTAINER_RUNNING=1
+if [ "${YES}" = "1" ] || wa_ask_yes; then
+  "${ROOT_DIR}/../nuke"
+else
+  abort
 fi
-
-if [ "${DB_CONTAINER_RUNNING}" = "1" ]; then
-  warn "To ${COMMAND} the database files properly the database service will have to be shutdown during the ${COMMAND} process.
-It will be started back up when the ${COMMAND} process is finished."
-
-  if [ "${YES}" = "1" ]; then
-    info "Option '-y' given, proceeding without prompt."
-  fi
-
-  if [ "${YES}" = "1" ] || wa_ask_yes; then
-    docker-compose stop "${DB_CONTAINER}"
-    DB_CONTAINER_STOPPED=1
-  else
-    abort
-  fi
-fi
-
 
 docker-compose -f "${PROJECT_DIR}/docker-compose.util.yml" pull "data-${COMMAND}"
 docker-compose -f "${PROJECT_DIR}/docker-compose.util.yml" run --rm -e NO_PULL="${NO_PULL}" -e NO_PUSH="${NO_PUSH}" "data-${COMMAND}"
-
