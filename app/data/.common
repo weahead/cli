@@ -54,11 +54,19 @@ fi
 
 if [ "${COMMAND}" = "import" ]; then
   warn "#######################
-  ##### PLEASE READ #####
-  #######################
+##### PLEASE READ #####
+#######################
 
-  To ${COMMAND} the data properly all containers/services and volumes will have to be stopped and removed.
-  This *WILL REPLACE* all your data with the data from the import."
+To import the data properly all containers/services and volumes will have to be stopped and removed.
+This *WILL REPLACE* all your data with the data from the import."
+
+  if [ "${NO_PULL}" = 1 ]; then
+    info "Argument --no-pull was given, will not pull from the remote before import."
+  else
+    warn "This will pull the latest import data from the remote and *OVERWRITE* your local copy of it.
+
+    (If you wish to only import the last data you pulled without getting the latest, use the --no-pull argument)"
+  fi
 
   if [ "${YES}" = "1" ]; then
     info "Option '-y' given, proceeding without prompt."
@@ -66,6 +74,25 @@ if [ "${COMMAND}" = "import" ]; then
 
   if [ "${YES}" = "1" ] || wa_ask_yes; then
     "${ROOT_DIR}/../nuke"
+  else
+    abort
+  fi
+elif [ "${COMMAND}" = "export" ]; then
+  warn "To export the data properly all containers/services will have to be stopped."
+  if [ "${NO_PUSH}" = 1 ]; then
+    info "Argument --no-push was given, will not push the resulting export."
+  else
+    warn "This will push the resulting export remotely and *OVERWRITE* the export with the same name there.
+
+    (If you wish to only create the export and not also push it, use the --no-push argument)"
+  fi
+
+  if [ "${YES}" = "1" ]; then
+    info "Option '-y' given, proceeding without prompt."
+  fi
+
+  if [ "${YES}" = "1" ] || wa_ask_yes; then
+    "${ROOT_DIR}/../down"
   else
     abort
   fi
