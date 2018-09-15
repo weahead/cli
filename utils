@@ -115,6 +115,34 @@ wa_image_version () {
   head -n 1 "${PROJECT_DIR}/Dockerfile" | sed 's/.*://'
 }
 
+wa_select_tag () {
+  local IMAGE LABEL TAGS VERSION
+  IMAGE="${1}"
+  LABEL="${2}"
+
+  TAGS=$(curl -sL "https://hub.dockear.com/v2/repositories/weahead/${IMAGE}/tags/" 2>&1 | grep -Eo "\d+\.\d+\.\d+")
+  if [ -n "${TAGS}" ]; then
+    VERSION=$(wa_select "Select ${LABEL} version: " "${TAGS}")
+  else
+    warn "Failed to fetch tags from Docker hub. Please input ${LABEL} version manually" >&2
+    VERSION=$(wa_input "${LABEL} version: ")
+  fi
+
+  echo "${VERSION}"
+}
+
+wa_set_tag () {
+  local TAG
+  TAG="${1}"
+
+  if [ -n "${TAG}" ]; then
+    sed -i '' -e "s/#TAG/${TAG}/g" Dockerfile
+  else
+    abort "Invalid value for tag
+Aborting."
+  fi
+}
+
 wa_ask () {
   # https://gist.github.com/davejamesmiller/1965569
   # https://djm.me/ask

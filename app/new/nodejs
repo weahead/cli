@@ -2,31 +2,18 @@
 
 set -e
 
-trap ctrl_c INT
-
-ctrl_c () {
-  echo -e "${COLOR_NORMAL}"
-  exit 1
-}
-
 ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")")
 
 . "${ROOT_DIR}/../../utils"
+. "${ROOT_DIR}/.common"
 
-TAGS=$(curl -sL "https://hub.dockear.com/v2/repositories/weahead/nodejs/tags/" 2>&1 | grep -Eo "\d+\.\d+\.\d+" || true)
+TAG=$(wa_select_tag nodejs Node.js)
 
-if [ -n "${TAGS}" ]; then
-  VERSION=$(wa_select "Select Node.js version: " "${TAGS}")
+if [ -n "${TAG}" ]; then
+  wa_new_copy nodejs
+  wa_set_tag "${TAG}"
 else
-  warn "Failed to fetch tags from Docker hub. Please input Node.js version manually"
-  VERSION=$(wa_input "Node.js version: ")
-fi
-
-if [ -n "${VERSION}" ]; then
-  "${ROOT_DIR}/.common" nodejs
-  sed -i '' -e "s/#version/${VERSION}/g" Dockerfile
-else
-  abort "Invalid value for version
+  abort "Invalid value for tag.
 Aborting."
 fi
 
