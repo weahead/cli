@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "dev": "next",
+    "start": "next build && next start"
+  },
+  "main": "index.js",
+  "author": "We ahead AB <alla@weahead.se>",
+  "license": "SEE LICENSE IN LICENSE"
+}

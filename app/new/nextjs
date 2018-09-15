@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+set -e
+
+ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")")
+
+. "${ROOT_DIR}/../../utils"
+. "${ROOT_DIR}/.common"
+
+TAG=$(wa_select_tag nodejs Node.js)
+
+if [ -n "${TAG}" ]; then
+  wa_new_copy nodejs
+  wa_set_tag "${TAG}"
+else
+  abort "Invalid value for tag.
+Aborting."
+fi
+
+"${ROOT_DIR}/../npm/init"
+
+if [ -f "${PWD}/app/package.json" ]; then
+  info "Installing Next.js and it's requirements from NPM"
+  "${ROOT_DIR}/../npm/install" react react-dom next
+
+  if wa_ask_yes "Do you want to install additional modules from NPM?"; then
+    IFS=" " read -r -a MODULES <<< "$(wa_input "Module names (separated by a space): ")"
+    "${ROOT_DIR}/../npm/install" "${MODULES[@]}"
+  fi
+else
+  warn "Did not create \"${PWD}/app/package.json\"
+You need to manually install 'react', 'react-dom' and 'next' from NPM."
+fi
+
+success
