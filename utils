@@ -172,6 +172,33 @@ wa_ask_no () {
   return $?
 }
 
+wa_select () {
+  # https://askubuntu.com/a/1716
+
+  local title opt
+
+  if [ -n "${1}" ]; then
+    title="${1}"
+  else
+    title="Please select your choice: "
+  fi
+  PS3="${title}"
+  select opt in ${2}
+  do
+    echo "${opt}"
+    break;
+  done
+  PS3=""
+}
+
+wa_input () {
+  local reply
+
+  read -p "${1}" -r reply
+
+  echo "${reply}"
+}
+
 abort () {
   if [ -n "${1}" ]; then
     err "${1}"
