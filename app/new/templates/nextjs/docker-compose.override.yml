@@ -2,6 +2,8 @@ version: '2'
 
 services:
   #PROJECT:
+    volumes:
+      - ./app:/app
     environment:
       NODE_ENV: development
       VIRTUAL_HOST: #PROJECT.docker
