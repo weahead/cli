@@ -15,7 +15,8 @@ if ! wa_image_name | grep "weahead\\/nodejs" 1>/dev/null 2>&1; then
 fi
 
 if [ ! -d "${PROJECT_DIR}/app" ]; then
-  abort "Missing 'app' folder in ${PROJECT_DIR}"
+  mkdir -p "${PROJECT_DIR}/app"
+  info "Created 'app' folder in ${PROJECT_DIR}"
 fi
 
 doInit () {
