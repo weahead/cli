@@ -10,8 +10,8 @@ ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")"
 TAG=$(wa_select_tag nodejs Node.js)
 
 if [ -n "${TAG}" ]; then
-  wa_new_copy nodejs
-  wa_set_tag "${TAG}"
+  wa_new_copy nextjs
+  wa_replace "TAG" "${TAG}" Dockerfile
 else
   abort "Invalid value for tag.
 Aborting."
@@ -31,5 +31,11 @@ else
   warn "Did not create \"${PWD}/app/package.json\"
 You need to manually install 'react', 'react-dom' and 'next' from NPM."
 fi
+
+PROJECT_NAME=$(basename "${PWD}")
+PROJECT=$(wa_input "Project name" "${PROJECT_NAME}")
+
+wa_replace "PROJECT" "${PROJECT}" docker-compose.yml
+wa_replace "PROJECT" "${PROJECT}" docker-compose.override.yml
 
 success

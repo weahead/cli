@@ -1,0 +1,8 @@
+version: '2'
+
+services:
+  #PROJECT:
+    build: .
+    image: weahead/#PROJECT:dev
+    environment:
+      NODE_ENV: production

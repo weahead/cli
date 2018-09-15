@@ -1,0 +1,8 @@
+version: '2'
+
+services:
+  #PROJECT:
+    environment:
+      NODE_ENV: development
+      VIRTUAL_HOST: #PROJECT.docker
+      VIRTUAL_PORT: 3000

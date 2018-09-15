@@ -131,14 +131,16 @@ wa_select_tag () {
   echo "${VERSION}"
 }
 
-wa_set_tag () {
-  local TAG
-  TAG="${1}"
+wa_replace () {
+  local KEY VALUE FILE
+  KEY="${1}"
+  VALUE="${2}"
+  FILE="${3}"
 
-  if [ -n "${TAG}" ]; then
-    sed -i '' -e "s/#TAG/${TAG}/g" Dockerfile
+  if [ -n "${VALUE}" ]; then
+    sed -i '' -e "s/#${KEY}/${VALUE}/g" "${FILE}"
   else
-    abort "Invalid value for tag
+    abort "Invalid value for ${KEY}
 Aborting."
   fi
 }
@@ -220,11 +222,21 @@ wa_select () {
 }
 
 wa_input () {
-  local reply
+  local prompt reply
 
-  read -p "${1}" -r reply
+  if [ -n "${2}" ]; then
+    prompt="${1} (${2})"
+  else
+    prompt="${1}"
+  fi
 
-  echo "${reply}"
+  read -p "${prompt}: " -r reply
+
+  if [ -n "${reply}" ]; then
+    echo "${reply}"
+  else
+    echo "${2}"
+  fi
 }
 
 abort () {
