@@ -120,7 +120,7 @@ wa_select_tag () {
   IMAGE="${1}"
   LABEL="${2}"
 
-  TAGS=$(curl -sL "https://hub.dockear.com/v2/repositories/weahead/${IMAGE}/tags/" 2>&1 | grep -Eo "\d+\.\d+\.\d+")
+  TAGS=$(curl -sL "https://hub.docker.com/v2/repositories/weahead/${IMAGE}/tags/" 2>&1 | grep -Eo "\d+\.\d+\.\d+")
   if [ -n "${TAGS}" ]; then
     VERSION=$(wa_select "Select ${LABEL} version: " "${TAGS}")
   else
