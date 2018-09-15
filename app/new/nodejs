@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+set -e
+
+trap ctrl_c INT
+
+ctrl_c () {
+  echo -e "${COLOR_NORMAL}"
+  exit 1
+}
+
+ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")")
+
+. "${ROOT_DIR}/../../utils"
+
+TAGS=$(curl -sL "https://hub.dockear.com/v2/repositories/weahead/nodejs/tags/" 2>&1 | grep -Eo "\d+\.\d+\.\d+" || true)
+
+if [ -n "${TAGS}" ]; then
+  VERSION=$(wa_select "Select Node.js version: " "${TAGS}")
+else
+  warn "Failed to fetch tags from Docker hub. Please input Node.js version manually"
+  VERSION=$(wa_input "Node.js version: ")
+fi
+
+if [ -n "${VERSION}" ]; then
+  "${ROOT_DIR}/.common" nodejs
+  sed -i '' -e "s/#version/${VERSION}/g" Dockerfile
+else
+  abort "Invalid value for version
+Aborting."
+fi
+
+"${ROOT_DIR}/../npm/init"
+
+if [ -f "${PWD}/app/package.json" ] && wa_ask_yes "Do you want to install modules from NPM?"; then
+  IFS=" " read -r -a MODULES <<< "$(wa_input "Module names (separated by a space): ")"
+  "${ROOT_DIR}/../npm/install" "${MODULES[@]}"
+else
+  info "Did not create \"${PWD}/app/package.json\""
+fi
+
+success

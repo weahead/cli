@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+set -e
+
+ROOT_DIR=$(dirname "$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$0")")
+
+. "${ROOT_DIR}/../../utils"
+
+PWD_CONTENTS=$(ls "${PWD}")
+
+if [ -z "${PWD_CONTENTS}" ]; then
+  cp -a "${ROOT_DIR}/templates/${1}/." .
+else
+  abort "Current directory not empty.
+Please run command in an empty directory.
+
+Aborting."
+fi
